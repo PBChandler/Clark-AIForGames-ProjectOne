@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: 7863252149129709174}
   - component: {fileID: 8399957058080129768}
   - component: {fileID: 7888751381736441338}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: FreeLook Camera
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -33,7 +33,8 @@ Transform:
   m_LocalPosition: {x: 0, y: 0.53, z: 0}
   m_LocalScale: {x: 0.9999999, y: 1, z: 0.9999999}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 586715644190981086}
   m_Father: {fileID: 4446613436292652294}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &2202601719400641053
@@ -194,7 +195,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4838509905913847956}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Headpoint
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -230,7 +231,7 @@ GameObject:
   - component: {fileID: 791336278887284557}
   - component: {fileID: 5284097590735990514}
   - component: {fileID: 2066390783532295406}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: PlayerBody
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -251,6 +252,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 4838509905913847956}
+  - {fileID: 8518765629084425737}
   m_Father: {fileID: 4446613436292652294}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!33 &701676395231963074
@@ -369,6 +371,68 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   cam: {fileID: 0}
+--- !u!1 &4504923519830637716
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 586715644190981086}
+  m_Layer: 6
+  m_Name: PlayerHoldPoint
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &586715644190981086
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4504923519830637716}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0.27, y: 0, z: 1.79}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 8246152762315397452}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &6610577794718724246
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8518765629084425737}
+  m_Layer: 6
+  m_Name: groundcheck
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8518765629084425737
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6610577794718724246}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: -1.02, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 3845114860302641111}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &8657839086902122415
 GameObject:
   m_ObjectHideFlags: 0
@@ -381,7 +445,7 @@ GameObject:
   - component: {fileID: 5316607800329706968}
   - component: {fileID: 4896383471327355268}
   - component: {fileID: 6563087206573740608}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: '[PLAYER]'
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -424,8 +488,15 @@ MonoBehaviour:
   decelerationFactor: 25
   moveInput: {x: 0, y: 0, z: 0}
   moveForce: {x: 0, y: 0, z: 0}
+  whatIsGround:
+    serializedVersion: 2
+    m_Bits: 256
   negativeMoveDirection: {x: -0.66841537, y: -0, z: -0.7437885}
+  groundCheck: {fileID: 8518765629084425737}
   drag: 24
+  groundDistance: 0.02
+  jumpForce: 500.7
+  isGrounded: 0
 --- !u!114 &4896383471327355268
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -438,6 +509,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a98920dc16960bf47ac7d429d32e5a12, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  face: {fileID: 8246152762315397452}
+  avoidPlayer:
+    serializedVersion: 2
+    m_Bits: 55
   activeInteractable: {fileID: 0}
 --- !u!114 &6563087206573740608
 MonoBehaviour:

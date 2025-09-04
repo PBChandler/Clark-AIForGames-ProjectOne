@@ -24,7 +24,15 @@ public class PlayerInteractionHandler : MonoBehaviour
                 }
                 
             }
-            catch { }
+            catch { 
+                if(activeInteractable.tag == "Launchable")
+                {
+                    if (Input.GetKeyDown(KeyCode.E))
+                    {
+                        activeInteractable.GetComponent<Rigidbody>().AddForce(face.TransformDirection(Vector3.forward)*20, ForceMode.Impulse);
+                    }
+                }
+            }
            
         }
     }
