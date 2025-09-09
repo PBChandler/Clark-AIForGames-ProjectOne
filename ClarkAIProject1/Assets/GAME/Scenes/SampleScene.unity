@@ -5031,6 +5031,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 5434364173480525505, guid: 5508281804d974d47a08598621ce1cb8, type: 3}
+      propertyPath: player
+      value: 
+      objectReference: {fileID: 506115372}
     - target: {fileID: 5627252692112582029, guid: 5508281804d974d47a08598621ce1cb8, type: 3}
       propertyPath: m_Name
       value: StackManager
@@ -6782,6 +6786,11 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 505306930}
   m_Mesh: {fileID: -5053925668127403250, guid: 0adb260f5dd0740459341de7f44061ec, type: 3}
+--- !u!1 &506115372 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 4453366641817945892, guid: adadaaa3def925e4096ef46dc2b81e90, type: 3}
+  m_PrefabInstance: {fileID: 6860238752879981045}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &506415996
 GameObject:
   m_ObjectHideFlags: 0
