@@ -5,7 +5,6 @@ using UnityEngine;
 
 public class StackManager : MonoBehaviour
 {
-    
     public static event Action<StackHeightChangedEventArgs> OnStackHeightChanged;
 
     // Singleton instance
@@ -25,7 +24,6 @@ public class StackManager : MonoBehaviour
 
     private void Awake()
     {
-        
         if (Instance != null && Instance != this)
         {
             Destroy(gameObject);
@@ -38,11 +36,9 @@ public class StackManager : MonoBehaviour
 
     private void Start()
     {
-        // periodic but not on update
         StartCoroutine(CheckHeightRoutine());
     }
 
-    
     public void RegisterCube(Transform cubeTransform)
     {
         if (!_activeCubes.Contains(cubeTransform))
@@ -56,12 +52,10 @@ public class StackManager : MonoBehaviour
         _activeCubes.Remove(cubeTransform);
     }
 
-    
     private IEnumerator CheckHeightRoutine()
     {
         while (true)
         {
-            // Wait for the specified interval before running the check.
             yield return new WaitForSeconds(checkInterval);
             CalculateAndCheckHeight();
         }
@@ -71,7 +65,6 @@ public class StackManager : MonoBehaviour
     {
         if (_activeCubes.Count == 0)
         {
-            // If there are 0 cubes, the height is 0.
             if (_lastKnownMaxHeight != 0)
             {
                 _lastKnownMaxHeight = 0;
@@ -80,19 +73,21 @@ public class StackManager : MonoBehaviour
             return;
         }
 
-        // 1. Clear previous counts
         _stackCounts.Clear();
         int currentMaxHeight = 0;
 
-        // 2. Iterate through all cubes and place them in buckets
         foreach (var cube in _activeCubes)
         {
-            // Create a 2D grid coordinate based on the cube's world position
+            Rigidbody rb = cube.GetComponent<Rigidbody>();
+            if (rb == null) continue;
+
+            // Only count cubes that have settled (sleeping rigidbody)
+            if (!rb.IsSleeping()) continue;
+
             int bucketX = Mathf.RoundToInt(cube.position.x / bucketSize);
             int bucketZ = Mathf.RoundToInt(cube.position.z / bucketSize);
             var bucket = new Vector2Int(bucketX, bucketZ);
 
-            // Increment the count for that bucket
             if (!_stackCounts.ContainsKey(bucket))
             {
                 _stackCounts[bucket] = 0;
@@ -100,7 +95,6 @@ public class StackManager : MonoBehaviour
             _stackCounts[bucket]++;
         }
 
-        // 3. Find the tallest stack among all buckets
         foreach (var count in _stackCounts.Values)
         {
             if (count > currentMaxHeight)
@@ -109,7 +103,6 @@ public class StackManager : MonoBehaviour
             }
         }
 
-        // 4. Compare with the last known height and fire the event if it changed
         if (currentMaxHeight != _lastKnownMaxHeight)
         {
             HeightChangeDirection direction = currentMaxHeight > _lastKnownMaxHeight

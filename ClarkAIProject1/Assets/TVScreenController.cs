@@ -3,11 +3,18 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [RequireComponent(typeof(Renderer))]
+[RequireComponent(typeof(AudioSource))]
 public class TVScreenController : MonoBehaviour
 {
     [Header("Screen Content")]
     [SerializeField] private Texture defaultScreenTexture;
     [SerializeField] private List<HeightImageMapping> imageMappings;
+
+    [Header("Audio")]
+    [Tooltip("Sound played every time the channel changes.")]
+    [SerializeField] private AudioClip channelChangeSFX;
+    [Tooltip("Looping background sound for the TV when on a channel.")]
+    [SerializeField] private AudioClip tvLoopSound;
 
     [Header("Transition Effect")]
     [Tooltip("How long the channel change effect lasts in seconds.")]
@@ -17,6 +24,9 @@ public class TVScreenController : MonoBehaviour
     private Material _screenMaterialInstance;
     private Coroutine _transitionCoroutine;
 
+    private AudioSource _audioSource;  // TV loop sound
+    private AudioSource _sfxSource;    // Channel change sound
+
     private static readonly int TransitionAmountID = Shader.PropertyToID("_TransitionAmount");
     private static readonly int MainTexID = Shader.PropertyToID("_MainTex");
 
@@ -25,6 +35,17 @@ public class TVScreenController : MonoBehaviour
         _screenRenderer = GetComponent<Renderer>();
         _screenMaterialInstance = _screenRenderer.material;
         _screenMaterialInstance.mainTexture = defaultScreenTexture;
+
+        // Main audio for looping TV sound
+        _audioSource = gameObject.AddComponent<AudioSource>();
+        _audioSource.loop = true;
+        _audioSource.playOnAwake = false;
+        _audioSource.clip = tvLoopSound;
+
+        // Separate source for channel-change SFX
+        _sfxSource = gameObject.AddComponent<AudioSource>();
+        _sfxSource.loop = false;
+        _sfxSource.playOnAwake = false;
     }
 
     private void OnEnable()
@@ -60,18 +81,20 @@ public class TVScreenController : MonoBehaviour
 
         if (textureFound || eventArgs.NewHeight <= 0)
         {
-            // If a transition is already running, stop it first
             if (_transitionCoroutine != null)
-            {
                 StopCoroutine(_transitionCoroutine);
-            }
-            _transitionCoroutine = StartCoroutine(ChangeChannelRoutine(textureToDisplay));
+
+            _transitionCoroutine = StartCoroutine(ChangeChannelRoutine(textureToDisplay, eventArgs.NewHeight > 0));
         }
     }
 
-    private IEnumerator ChangeChannelRoutine(Texture newTexture)
+    private IEnumerator ChangeChannelRoutine(Texture newTexture, bool channelOn)
     {
         float elapsedTime = 0f;
+
+        // Play the channel-change sound immediately
+        if (channelChangeSFX != null)
+            _sfxSource.PlayOneShot(channelChangeSFX);
 
         // Animate the effect IN
         while (elapsedTime < transitionDuration / 2)
@@ -82,8 +105,19 @@ public class TVScreenController : MonoBehaviour
             yield return null;
         }
 
-        // --- The exact moment the channel switches ---
+        // --- Switch the channel ---
         _screenMaterialInstance.SetTexture(MainTexID, newTexture);
+
+        // Start or stop looping TV sound
+        if (channelOn && tvLoopSound != null)
+        {
+            if (!_audioSource.isPlaying)
+                _audioSource.Play();
+        }
+        else
+        {
+            _audioSource.Stop();
+        }
 
         elapsedTime = 0f;
         while (elapsedTime < transitionDuration / 2)
@@ -94,8 +128,9 @@ public class TVScreenController : MonoBehaviour
             yield return null;
         }
 
-        // Ensure the effect is fully off
         _screenMaterialInstance.SetFloat(TransitionAmountID, 0f);
         _transitionCoroutine = null;
     }
 }
+
+
