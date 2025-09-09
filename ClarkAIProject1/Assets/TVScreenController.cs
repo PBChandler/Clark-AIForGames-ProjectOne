@@ -1,27 +1,29 @@
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-
 
 [RequireComponent(typeof(Renderer))]
 public class TVScreenController : MonoBehaviour
 {
-    [Tooltip("The default texture for the screen when no stack is present.")]
+    [Header("Screen Content")]
     [SerializeField] private Texture defaultScreenTexture;
-
-    [Tooltip("Define the textures for each height range.")]
     [SerializeField] private List<HeightImageMapping> imageMappings;
+
+    [Header("Transition Effect")]
+    [Tooltip("How long the channel change effect lasts in seconds.")]
+    [SerializeField] private float transitionDuration = 0.4f;
 
     private Renderer _screenRenderer;
     private Material _screenMaterialInstance;
+    private Coroutine _transitionCoroutine;
+
+    private static readonly int TransitionAmountID = Shader.PropertyToID("_TransitionAmount");
+    private static readonly int MainTexID = Shader.PropertyToID("_MainTex");
 
     private void Awake()
     {
-
         _screenRenderer = GetComponent<Renderer>();
-
-        // Creates a unique instance of the material so we don't change the project asset.
         _screenMaterialInstance = _screenRenderer.material;
-
         _screenMaterialInstance.mainTexture = defaultScreenTexture;
     }
 
@@ -32,47 +34,68 @@ public class TVScreenController : MonoBehaviour
 
     private void OnDisable()
     {
-        // avoid that scary memory leak
         StackManager.OnStackHeightChanged -= HandleStackHeightChanged;
     }
 
     private void HandleStackHeightChanged(StackHeightChangedEventArgs eventArgs)
     {
-        int newHeight = eventArgs.NewHeight;
-        HeightChangeDirection direction = eventArgs.Direction;
+        Texture textureToDisplay = defaultScreenTexture;
+        bool textureFound = false;
 
-        // If the stack is gone, revert to the default texture.
-        if (newHeight <= 0)
+        if (eventArgs.NewHeight > 0)
         {
-            _screenMaterialInstance.mainTexture = defaultScreenTexture;
-            return;
-        }
-
-        // Find the correct mapping for the current height.
-        foreach (var mapping in imageMappings)
-        {
-            if (newHeight >= mapping.minHeight && newHeight <= mapping.maxHeight)
+            foreach (var mapping in imageMappings)
             {
-                //Now pick the texture based on direction.
-                Texture textureToDisplay = null;
-                if (direction == HeightChangeDirection.Increased)
+                if (eventArgs.NewHeight >= mapping.minHeight && eventArgs.NewHeight <= mapping.maxHeight)
                 {
-                    textureToDisplay = mapping.textureOnIncrease;
-                }
-                else
-                {
-                    textureToDisplay = mapping.textureOnDecrease;
-                }
+                    textureToDisplay = (eventArgs.Direction == HeightChangeDirection.Increased)
+                        ? mapping.textureOnIncrease
+                        : mapping.textureOnDecrease;
 
-               
-                if (textureToDisplay != null)
-                {
-                    _screenMaterialInstance.mainTexture = textureToDisplay;
+                    textureFound = textureToDisplay != null;
+                    break;
                 }
-
-   
-                return;
             }
         }
+
+        if (textureFound || eventArgs.NewHeight <= 0)
+        {
+            // If a transition is already running, stop it first
+            if (_transitionCoroutine != null)
+            {
+                StopCoroutine(_transitionCoroutine);
+            }
+            _transitionCoroutine = StartCoroutine(ChangeChannelRoutine(textureToDisplay));
+        }
+    }
+
+    private IEnumerator ChangeChannelRoutine(Texture newTexture)
+    {
+        float elapsedTime = 0f;
+
+        // Animate the effect IN
+        while (elapsedTime < transitionDuration / 2)
+        {
+            float progress = elapsedTime / (transitionDuration / 2);
+            _screenMaterialInstance.SetFloat(TransitionAmountID, progress);
+            elapsedTime += Time.deltaTime;
+            yield return null;
+        }
+
+        // --- The exact moment the channel switches ---
+        _screenMaterialInstance.SetTexture(MainTexID, newTexture);
+
+        elapsedTime = 0f;
+        while (elapsedTime < transitionDuration / 2)
+        {
+            float progress = 1.0f - (elapsedTime / (transitionDuration / 2));
+            _screenMaterialInstance.SetFloat(TransitionAmountID, progress);
+            elapsedTime += Time.deltaTime;
+            yield return null;
+        }
+
+        // Ensure the effect is fully off
+        _screenMaterialInstance.SetFloat(TransitionAmountID, 0f);
+        _transitionCoroutine = null;
     }
 }
