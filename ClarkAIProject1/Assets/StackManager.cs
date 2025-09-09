@@ -15,6 +15,8 @@ public class StackManager : MonoBehaviour
     private int _lastKnownMaxHeight = 0;
     private readonly Dictionary<Vector2Int, int> _stackCounts = new Dictionary<Vector2Int, int>();
 
+    public GameObject player;
+
     private void Awake()
     {
         if (Instance != null && Instance != this)
@@ -33,6 +35,34 @@ public class StackManager : MonoBehaviour
         if (!_activeCubes.Contains(cubeTransform))
             _activeCubes.Add(cubeTransform);
     }
+
+    private IEnumerator CthulhuEnding()
+    {
+       
+        if (player != null)
+        {
+            var rb = player.GetComponent<Rigidbody>();
+            if (rb != null)
+            {
+                rb.useGravity = false;
+                rb.linearVelocity = Vector3.zero;
+
+                float floatDuration = 5f;
+                float elapsed = 0f;
+                Vector3 floatDirection = Vector3.up * 10f; // upward velocity
+
+                while (elapsed < floatDuration)
+                {
+                    rb.MovePosition(rb.position + floatDirection * Time.deltaTime);
+                    elapsed += Time.deltaTime;
+                    yield return null;
+                }
+            }
+        }
+
+        UnityEngine.SceneManagement.SceneManager.LoadScene("TitleScreen");
+    }
+
 
     public void DeregisterCube(Transform cubeTransform)
     {
@@ -92,6 +122,12 @@ public class StackManager : MonoBehaviour
 
             OnStackHeightChanged?.Invoke(new StackHeightChangedEventArgs(currentMaxHeight, direction));
             _lastKnownMaxHeight = currentMaxHeight;
+
+            if (currentMaxHeight >= 20)
+            {
+                StartCoroutine(CthulhuEnding());
+            }
         }
     }
+
 }
