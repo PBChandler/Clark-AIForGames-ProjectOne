@@ -151,7 +151,7 @@ GameObject:
   - component: {fileID: 6780145302678869595}
   m_Layer: 8
   m_Name: SpawnableCube
-  m_TagString: Launchable
+  m_TagString: Cube
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -314,6 +314,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2d96147d3a5df4d8594e6fa7b55a3510, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  hasLanded: 0
 --- !u!1 &5866865679051963097
 GameObject:
   m_ObjectHideFlags: 0
