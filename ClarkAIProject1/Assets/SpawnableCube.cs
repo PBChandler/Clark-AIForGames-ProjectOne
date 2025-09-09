@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using System.Linq;
+
 public class SpawnableCube : MonoBehaviour, Interactable
 {
     public Color color_Red, color_Blue, color_Green;
@@ -16,6 +17,7 @@ public class SpawnableCube : MonoBehaviour, Interactable
     public Transform hat, boots;
     public float sphereCastRange;
     private Collider me;
+
     public enum CubeType
     {
         NULL,
@@ -23,6 +25,7 @@ public class SpawnableCube : MonoBehaviour, Interactable
         BLUE,
         GREEN
     }
+
     public void Start()
     {
         rb = GetComponent<Rigidbody>();
@@ -30,8 +33,6 @@ public class SpawnableCube : MonoBehaviour, Interactable
         myCubeType = (CubeType)(int)Random.Range(1, 4);
         switch (myCubeType)
         {
-            case CubeType.NULL:
-                break;
             case CubeType.RED:
                 cubeMesh.material.color = color_Red;
                 break;
@@ -40,8 +41,6 @@ public class SpawnableCube : MonoBehaviour, Interactable
                 break;
             case CubeType.GREEN:
                 cubeMesh.material.color = color_Green;
-                break;
-            default:
                 break;
         }
         GameManager.instance.cubes.Add(this);
@@ -52,45 +51,61 @@ public class SpawnableCube : MonoBehaviour, Interactable
     {
         if (GameManager.playerAlreadyHoldingCube)
             return;
+
         isBeingHeld = true;
         GameManager.playerAlreadyHoldingCube = true;
+
+        // tell manager that cubes should stay unfrozen
+        GameManager.instance.cubesShouldStayUnfrozen = true;
+
+        // unfreeze all cubes
+        foreach (var cube in GameManager.instance.cubes)
+        {
+            if (cube != null && cube.rb != null)
+                cube.rb.isKinematic = false;
+        }
     }
 
     public void Update()
     {
         lifeTime += Time.deltaTime;
-        if(isBeingHeld)
+
+        if (isBeingHeld)
         {
             rb.isKinematic = false;
+
             if (Input.GetKeyUp(KeyCode.E))
             {
                 GameManager.playerAlreadyHoldingCube = false;
                 isBeingHeld = false;
+
+                // allow cubes to freeze again once dropped
+                GameManager.instance.cubesShouldStayUnfrozen = false;
             }
+
             transform.position = GameManager.instance.playerHoldPoint.position;
             transform.rotation = GameManager.instance.playerHoldPoint.rotation;
         }
         else
         {
-            if (rb.angularVelocity.magnitude == 0 && rb.linearVelocity.magnitude == 0 && lifeTime > 2f)
+            // only freeze cubes if player isn't holding one
+            if (!GameManager.instance.cubesShouldStayUnfrozen)
             {
-                
-               rb.isKinematic = true;
+                if (rb.angularVelocity.magnitude == 0 && rb.linearVelocity.magnitude == 0 && lifeTime > 2f)
+                {
+                    rb.isKinematic = true;
+                }
             }
         }
+
         CheckFor3Stack();
     }
 
     public void OnCollisionEnter(Collision collision)
     {
-        if(collision.gameObject.tag == "Launchable")
+        if (collision.gameObject.tag == "Launchable")
         {
-            #region oldcode
-            //if (neighbors.Contains(collision.gameObject.GetComponent<SpawnableCube>()))
-            //    return;
-            //neighbors.Add(collision.gameObject.GetComponent<SpawnableCube>());
-            #endregion
-            Invoke("CheckFor3Stack", 0.1f); //allow for bounce settling.
+            Invoke("CheckFor3Stack", 0.1f);
         }
     }
 
@@ -102,22 +117,17 @@ public class SpawnableCube : MonoBehaviour, Interactable
         Collider[] aboveCollides = Physics.OverlapSphere(hat.position, 1f);
         Collider[] belowCollides = Physics.OverlapSphere(boots.position, 1f);
 
-        List<Collider> combines;
-        combines = aboveCollides.ToList<Collider>();
-        foreach(Collider c in belowCollides)
+        List<Collider> combines = aboveCollides.ToList();
+        combines.AddRange(belowCollides);
+
+        foreach (Collider c in combines)
         {
-            combines.Add(c);
-        }
-        foreach(Collider c in combines)
-        {
-            Component spawn;
-            c.TryGetComponent(typeof(SpawnableCube), out spawn);
-            if(spawn != null && spawn != me)
+            if (c.TryGetComponent(out SpawnableCube sp) && sp != this)
             {
-                SpawnableCube sp = (SpawnableCube)spawn;
                 neighbors.Add(sp);
             }
         }
+
         foreach (SpawnableCube c in neighbors)
         {
             chain.Add(c);
@@ -125,8 +135,9 @@ public class SpawnableCube : MonoBehaviour, Interactable
             {
                 if (!chain.Contains(d) && d != this)
                     chain.Add(d);
-            }  
+            }
         }
+
         chain = RemoveDuplicates(chain);
         GameManager.iCheckStacks();
     }
@@ -136,13 +147,12 @@ public class SpawnableCube : MonoBehaviour, Interactable
         List<SpawnableCube> retval = new List<SpawnableCube>();
         foreach (SpawnableCube sad in pluh)
         {
-            if(!retval.Contains(sad))
-            {
+            if (!retval.Contains(sad))
                 retval.Add(sad);
-            }
         }
         return retval;
     }
+
     public void OnCollisionExit(Collision collision)
     {
         if (collision.gameObject.tag == "Launchable")

@@ -148,6 +148,7 @@ GameObject:
   - component: {fileID: 3683303858003332771}
   - component: {fileID: 3920419862368276156}
   - component: {fileID: 891961974249929373}
+  - component: {fileID: 6780145302678869595}
   m_Layer: 8
   m_Name: SpawnableCube
   m_TagString: Launchable
@@ -204,7 +205,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: e1843214dfbaad24a9bbb470f1d5403d, type: 2}
+  - {fileID: 2100000, guid: 4a44e2966c9c34446ab6ec67ba7984fb, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -301,6 +302,18 @@ MonoBehaviour:
   hat: {fileID: 1086776703460194288}
   boots: {fileID: 7101568937165781675}
   sphereCastRange: 1
+--- !u!114 &6780145302678869595
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1943147207736998099}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2d96147d3a5df4d8594e6fa7b55a3510, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &5866865679051963097
 GameObject:
   m_ObjectHideFlags: 0

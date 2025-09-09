@@ -1,96 +1,111 @@
 using UnityEngine;
-using System.IO;
 using System.Collections.Generic;
+using TMPro;
 
 public class StockPointer : MonoBehaviour
 {
+    [Header("Line Settings")]
     public LineRenderer rend;
-    public List<StockDataPoint> stockPoints = new List<StockDataPoint>();
-    public GameObject start, end;
-    int index = 0;
-    public Gradient activeGradient; List<Vector3> VectoredPositions = new List<Vector3>();
-    private float tempTime = 155, tempValue = 0;
+    public Gradient activeGradient;
+
+    [Header("Graph Settings")]
+    public float xStep = 5f;          // spacing between data points on X-axis
+    public float yScale = 10f;        // how tall each cube height appears
+    public int maxPoints = 50;        // how many points to keep in the graph (rolling window)
+
+    [Header("Anchors (optional)")]
+    public GameObject start, end;     // references for debugging/anchoring graph ends
+
+    private List<StockDataPoint> stockPoints = new List<StockDataPoint>();
+    private List<Vector3> vectoredPositions = new List<Vector3>();
+    private float timeCounter = 0f;
+
+    public TextMeshProUGUI stockCounter;
 
     public struct StockDataPoint
     {
         public float Time;
         public float Value;
-        public Vector3 position;
+        public Vector3 Position;
     }
 
-    public void Start()
+    private void OnEnable()
     {
+        
+        StackManager.OnStackHeightChanged += HandleStackHeightChanged;
+    }
+
+    private void OnDisable()
+    {
+    
+        StackManager.OnStackHeightChanged -= HandleStackHeightChanged;
+    }
+
+    private void Start()
+    {
+       
         AddDataPoint(0, 0, false);
-        AddDataPoint(100, 0, false);
-        AddDataPoint(155, -50, false);
     }
+
     /// <summary>
-    /// stopRecursion is to prevent the points added to smooth out the graph from creating an infinite loop;
+    /// Called whenever the stack height changes.
+    /// Adds a new data point to the graph.
     /// </summary>
-    /// <param name="time"></param>
-    /// <param name="value"></param>
-    /// <param name="stopRecursion"></param>
-    /// 
-    public void Update()
+    private void HandleStackHeightChanged(StackHeightChangedEventArgs args)
     {
-        if (Input.mouseScrollDelta.magnitude > 0.2f)
-        {
-            float sign = Mathf.Sign(Input.mouseScrollDelta.y);
-            tempValue = Random.Range(2f*sign, 40f*sign);
-            AddDataPoint(tempTime += 50, tempValue, false);
-        }
+        timeCounter += xStep; // move X-axis forward
+        AddDataPoint(timeCounter, args.NewHeight, false);
+        stockCounter.text = args.NewHeight.ToString();
     }
+
+    /// <summary>
+    /// Add a new point to the graph
+    /// </summary>
     public void AddDataPoint(float time, float value, bool stopRecursion)
     {
-   
-        Gradient g = new Gradient();
-        StockDataPoint newPoint = new StockDataPoint();
-        newPoint.position = new Vector3(start.transform.position.x+time, value-200, 0);
-        index++;
-        VectoredPositions.Add(newPoint.position);
-        List<GradientColorKey> key = new List<GradientColorKey>();
-        List<GradientAlphaKey> key2 = new List<GradientAlphaKey>();
-        StockDataPoint lastPoint = newPoint;//stop issues with it not being initialized
-        for (int i = 0; i < stockPoints.Count; i++)
+        StockDataPoint newPoint = new StockDataPoint
         {
-            GradientColorKey n = new GradientColorKey();
+            Time = time,
+            Value = value,
+            Position = new Vector3(time, value * yScale, 0)
+        };
 
-            if (i == 0)
-                n.color = Color.green;
-            else if (stockPoints[i - 1].Value > value)
-            {
-                n.color = Color.green;
-            }
-            else
-            {
-                n.color = Color.red;
-            }
-            
-
-        }
-        if (stockPoints.Count > 0)
-        {
-            lastPoint = stockPoints[stockPoints.Count - 1];
-            if (value < lastPoint.Value)
-            {
-                rend.startColor = Color.red;
-                rend.endColor = Color.red;
-            }
-            if (value >= lastPoint.Value)
-            {
-                rend.startColor = Color.green;
-                rend.endColor = Color.green;
-            }
-        }
-            
-        
-        activeGradient.SetKeys(key.ToArray(), key2.ToArray());
+        // Add to lists
         stockPoints.Add(newPoint);
-        rend.positionCount = VectoredPositions.Count;
-        rend.SetPositions(VectoredPositions.ToArray());
-       
-        start.transform.position = stockPoints[0].position;
-        end.transform.position = stockPoints[stockPoints.Count-1].position;
-       
+        vectoredPositions.Add(newPoint.Position);
+
+        // Keep only the latest maxPoints
+        if (stockPoints.Count > maxPoints)
+        {
+            stockPoints.RemoveAt(0);
+            vectoredPositions.RemoveAt(0);
+
+            // Shift X positions so the graph "scrolls" left
+            for (int i = 0; i < vectoredPositions.Count; i++)
+            {
+                vectoredPositions[i] = new Vector3(
+                    (i * xStep),
+                    vectoredPositions[i].y,
+                    vectoredPositions[i].z
+                );
+            }
+        }
+
+        // Apply to LineRenderer
+        rend.positionCount = vectoredPositions.Count;
+        rend.SetPositions(vectoredPositions.ToArray());
+
+        // Update line color based on trend
+        if (stockPoints.Count > 1)
+        {
+            var last = stockPoints[stockPoints.Count - 2];
+            if (value >= last.Value)
+                rend.startColor = rend.endColor = Color.green;
+            else
+                rend.startColor = rend.endColor = Color.red;
+        }
+
+        if (start != null) start.transform.position = vectoredPositions[0];
+        if (end != null) end.transform.position = vectoredPositions[vectoredPositions.Count - 1];
     }
 }
