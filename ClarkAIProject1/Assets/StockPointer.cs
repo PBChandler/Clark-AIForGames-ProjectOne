@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections.Generic;
+using TMPro;
 
 public class StockPointer : MonoBehaviour
 {
@@ -18,6 +19,8 @@ public class StockPointer : MonoBehaviour
     private List<StockDataPoint> stockPoints = new List<StockDataPoint>();
     private List<Vector3> vectoredPositions = new List<Vector3>();
     private float timeCounter = 0f;
+
+    public TextMeshProUGUI stockCounter;
 
     public struct StockDataPoint
     {
@@ -52,6 +55,7 @@ public class StockPointer : MonoBehaviour
     {
         timeCounter += xStep; // move X-axis forward
         AddDataPoint(timeCounter, args.NewHeight, false);
+        stockCounter.text = args.NewHeight.ToString();
     }
 
     /// <summary>
