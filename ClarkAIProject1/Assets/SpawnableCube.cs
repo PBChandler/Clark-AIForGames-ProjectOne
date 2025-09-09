@@ -17,6 +17,7 @@ public class SpawnableCube : MonoBehaviour, Interactable
     public Transform hat, boots;
     public float sphereCastRange;
     private Collider me;
+    public bool HasLanded { get; private set; } = false;
 
     public enum CubeType
     {
@@ -101,13 +102,18 @@ public class SpawnableCube : MonoBehaviour, Interactable
         CheckFor3Stack();
     }
 
-    public void OnCollisionEnter(Collision collision)
+    
+
+    private void OnCollisionEnter(Collision collision)
     {
-        if (collision.gameObject.tag == "Launchable")
+        if (!HasLanded && (collision.gameObject.CompareTag("Ground") || collision.gameObject.CompareTag("Cube")))
         {
-            Invoke("CheckFor3Stack", 0.1f);
+            HasLanded = true;
+            if (StackManager.Instance != null)
+                StackManager.Instance.RegisterCube(transform);
         }
     }
+
 
     public void CheckFor3Stack()
     {
